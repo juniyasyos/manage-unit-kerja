@@ -28,12 +28,36 @@ class UnitKerja extends Model
         'deleted_at',
     ];
 
+    public static function isCrudAllowed(): bool
+    {
+        $center = (bool) config('manage-unit-kerja.center_application', false);
+        $appEnv = (string) config('manage-unit-kerja.app_env', app()->environment());
+
+        return $center || in_array(strtolower($appEnv), ['local', 'dev', 'development'], true) || app()->environment('local');
+    }
+
     protected static function boot()
     {
         parent::boot();
 
         static::saving(function ($model) {
+            if (! static::isCrudAllowed()) {
+                throw new \Exception('CRUD tidak diizinkan kecuali pada app center atau environment local.');
+            }
+
             $model->slug = \Illuminate\Support\Str::slug($model->unit_name);
+        });
+
+        static::deleting(function ($model) {
+            if (! static::isCrudAllowed()) {
+                throw new \Exception('CRUD tidak diizinkan kecuali pada app center atau environment local.');
+            }
+        });
+
+        static::forceDeleting(function ($model) {
+            if (! static::isCrudAllowed()) {
+                throw new \Exception('CRUD tidak diizinkan kecuali pada app center atau environment local.');
+            }
         });
     }
 

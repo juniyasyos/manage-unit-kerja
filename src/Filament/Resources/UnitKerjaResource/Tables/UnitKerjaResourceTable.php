@@ -2,6 +2,7 @@
 
 namespace Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\Tables;
 
+use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource as ManageUnitKerjaResource;
 use Juniyasyos\ManageUnitKerja\Models\UnitKerja;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\ActionGroup;
@@ -68,13 +69,13 @@ class UnitKerjaResourceTable
                 EditAction::make('edit')
                     ->label('Edit')
                     ->tooltip('Edit')
-                    ->visible(fn($record) => method_exists($record, 'trashed') && ! $record->trashed())
+                    ->visible(fn($record) => ManageUnitKerjaResource::isCrudAllowed() && method_exists($record, 'trashed') && ! $record->trashed())
                     ->icon('heroicon-o-pencil-square'),
 
                 RestoreAction::make('restore')
                     ->visible(
-                        fn($record) =>
-                        Gate::allows('restore', $record) &&
+                        fn($record) => ManageUnitKerjaResource::isCrudAllowed() &&
+                            Gate::allows('restore', $record) &&
                             method_exists($record, 'trashed') &&
                             $record->trashed()
                     ),
@@ -82,8 +83,8 @@ class UnitKerjaResourceTable
                 ForceDeleteAction::make('forceDelete')
                     ->requiresConfirmation()
                     ->visible(
-                        fn($record) =>
-                        Gate::allows('forceDelete', $record) &&
+                        fn($record) => ManageUnitKerjaResource::isCrudAllowed() &&
+                            Gate::allows('forceDelete', $record) &&
                             method_exists($record, 'trashed') &&
                             $record->trashed()
                     ),
@@ -108,7 +109,7 @@ class UnitKerjaResourceTable
                     ->modalDescription('Apakah Anda yakin ingin menghapus data ini secara permanen? Tindakan ini tidak dapat dibatalkan.')
                     ->modalSubmitActionLabel('Ya, Hapus Permanen')
                     ->visible(fn() => Gate::allows('forceDelete', UnitKerja::class)),
-            ])->visible(fn() => Gate::any(['update_imut::category', 'create_imut::category'])),
+            ])->visible(fn() => ManageUnitKerjaResource::isCrudAllowed() && Gate::any(['update_imut::category', 'create_imut::category'])),
         ];
     }
 }

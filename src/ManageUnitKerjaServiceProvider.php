@@ -2,6 +2,8 @@
 
 namespace Juniyasyos\ManageUnitKerja;
 
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
 
 class ManageUnitKerjaServiceProvider extends ServiceProvider
@@ -17,6 +19,12 @@ class ManageUnitKerjaServiceProvider extends ServiceProvider
         if (file_exists($configPath)) {
             $this->mergeConfigFrom($configPath, 'manage-unit-kerja');
         }
+
+        $this->commands([
+            Console\InstallManageUnitKerjaCommand::class,
+            Console\PublishManageUnitKerjaCommand::class,
+            Console\SynchronizeUnitKerjaCommand::class,
+        ]);
     }
 
     /**
@@ -26,6 +34,11 @@ class ManageUnitKerjaServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
+        // Publishing rules for easy installation
+        $this->publishes([
+            __DIR__ . '/../config/manage-unit-kerja.php' => config_path('manage-unit-kerja.php'),
+        ], 'manage-unit-kerja-config');
+
         $this->publishes([
             __DIR__ . '/../database/migrations' => database_path('migrations'),
         ], 'manage-unit-kerja-migrations');
@@ -34,17 +47,32 @@ class ManageUnitKerjaServiceProvider extends ServiceProvider
             __DIR__ . '/../database/seeders' => database_path('seeders'),
         ], 'manage-unit-kerja-seeders');
 
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'manage-unit-kerja');
+        // Resource publishing tidak diperlukan karena resource dapat dikelola melalui config.
+        // Jika pengguna ingin meng-override, mereka dapat menyalin manual dari package atau extend.
 
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'manage-unit-kerja');
+        // optional default filesystem resources (views, lang, routes)
+        if (is_dir(__DIR__ . '/../resources/views')) {
+            $this->loadViewsFrom(__DIR__ . '/../resources/views', 'manage-unit-kerja');
+        }
 
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        if (is_dir(__DIR__ . '/../resources/lang')) {
+            $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'manage-unit-kerja');
+        }
 
-        // autoload Filament resource path
+        if (file_exists(__DIR__ . '/../routes/web.php')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        }
+
+        // autoload Filament navigation group
         if (class_exists(\Filament\PluginServiceProvider::class)) {
             \Filament\PluginServiceProvider::registerNavigationGroups([
                 'unit-kerja',
             ]);
         }
+    }
+
+    public function schedule(Schedule $schedule): void
+    {
+        // optional: schedule package tasks if needed
     }
 }

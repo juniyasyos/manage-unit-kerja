@@ -73,6 +73,31 @@ class UnitKerjaResource extends Resource implements HasShieldPermissions
         return __('filament-forms::unit-kerja.navigation.group');
     }
 
+    public static function isCenterApplication(): bool
+    {
+        return (bool) config('manage-unit-kerja.center_application', false);
+    }
+
+    public static function appEnv(): string
+    {
+        return (string) config('manage-unit-kerja.app_env', app()->environment());
+    }
+
+    public static function isLocalEnvironment(): bool
+    {
+        return in_array(strtolower(static::appEnv()), ['local', 'dev', 'development'], true) || app()->environment('local');
+    }
+
+    public static function isCrudAllowed(): bool
+    {
+        return static::isCenterApplication() || static::isLocalEnvironment();
+    }
+
+    public static function isSyncActive(): bool
+    {
+        return (bool) config('manage-unit-kerja.sync.active', false);
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema(UnitKerjaResourceSchema::make());
@@ -87,14 +112,7 @@ class UnitKerjaResource extends Resource implements HasShieldPermissions
             ->actions(UnitKerjaResourceTable::actions())
             ->bulkActions(UnitKerjaResourceTable::bulkActions());
     }
-
-    public static function getRelations(): array
-    {
-        return [
-            UsersRelationManager::class,
-        ];
-    }
-
+    
     public static function getPages(): array
     {
         return [
