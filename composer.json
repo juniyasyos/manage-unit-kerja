@@ -13,7 +13,8 @@
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0|^12.0",
         "filament/filament": "^3.0",
-        "bezhansalleh/filament-shield": "^3.3"
+        "bezhansalleh/filament-shield": "^3.3",
+        "guava/filament-modal-relation-managers": "^1.4"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0",

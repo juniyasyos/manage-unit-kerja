@@ -20,7 +20,7 @@ class ListUnitKerja extends ListRecords
                 ->icon('heroicon-m-plus');
         }
 
-        if (UnitKerjaResource::isSyncActive()) {
+        if (UnitKejraResource::isSyncActive()) {
             $actions[] = Actions\Action::make('provisionFromCenter')
                 ->label('Provision from App Center')
                 ->icon('heroicon-m-arrow-down-tray')
