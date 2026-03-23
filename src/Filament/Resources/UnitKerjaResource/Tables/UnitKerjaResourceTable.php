@@ -2,6 +2,14 @@
 
 namespace Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\Tables;
 
+use Filament\Actions\ActionGroup as ActionsActionGroup;
+use Filament\Actions\BulkActionGroup as ActionsBulkActionGroup;
+use Filament\Actions\DeleteBulkAction as ActionsDeleteBulkAction;
+use Filament\Actions\EditAction as ActionsEditAction;
+use Filament\Actions\ForceDeleteAction as ActionsForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction as ActionsForceDeleteBulkAction;
+use Filament\Actions\RestoreAction as ActionsRestoreAction;
+use Filament\Actions\RestoreBulkAction as ActionsRestoreBulkAction;
 use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource as ManageUnitKerjaResource;
 use Juniyasyos\ManageUnitKerja\Models\UnitKerja;
 use Filament\Support\Enums\FontWeight;
@@ -16,6 +24,7 @@ use Filament\Tables\Actions\RestoreAction;
 use Filament\Tables\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
+use Guava\FilamentModalRelationManagers\Actions\RelationManagerAction;
 use Illuminate\Support\Facades\Gate;
 
 class UnitKerjaResourceTable
@@ -41,31 +50,24 @@ class UnitKerjaResourceTable
         ];
     }
 
-    public static function headerActions(): array
-    {
-        return [
-            \Filament\Tables\Actions\ExportAction::make()->exporter(\Juniyasyos\ManageUnitKerja\Filament\Exports\UnitKerjaExporter::class),
-        ];
-    }
-
     public static function actions(): array
     {
         return [
-            \Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction::make('users')
+            RelationManagerAction::make('users')
                 ->slideOver()
                 ->label('Pegawai')
                 ->icon('heroicon-o-user-group')
                 ->color('success')
                 ->relationManager(\Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\RelationManagers\UsersRelationManager::make()),
 
-            ActionGroup::make([
-                EditAction::make('edit')
+            ActionsActionGroup::make([
+                ActionsEditAction::make('edit')
                     ->label('Edit')
                     ->tooltip('Edit')
                     ->visible(fn($record) => ManageUnitKerjaResource::isCrudAllowed() && method_exists($record, 'trashed') && ! $record->trashed())
                     ->icon('heroicon-o-pencil-square'),
 
-                RestoreAction::make('restore')
+                ActionsRestoreAction::make('restore')
                     ->visible(
                         fn($record) => ManageUnitKerjaResource::isCrudAllowed() &&
                             Gate::allows('restore', $record) &&
@@ -73,7 +75,7 @@ class UnitKerjaResourceTable
                             $record->trashed()
                     ),
 
-                ForceDeleteAction::make('forceDelete')
+                ActionsForceDeleteAction::make('forceDelete')
                     ->requiresConfirmation()
                     ->visible(
                         fn($record) => ManageUnitKerjaResource::isCrudAllowed() &&
@@ -88,14 +90,14 @@ class UnitKerjaResourceTable
     public static function bulkActions(): array
     {
         return [
-            BulkActionGroup::make([
-                DeleteBulkAction::make()
+            ActionsBulkActionGroup::make([
+                ActionsDeleteBulkAction::make()
                     ->label('Hapus'),
 
-                RestoreBulkAction::make()
+                ActionsRestoreBulkAction::make()
                     ->label('Pulihkan'),
 
-                ForceDeleteBulkAction::make()
+                ActionsForceDeleteBulkAction::make()
                     ->label('Hapus Permanen')
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Permanen Data Terpilih')

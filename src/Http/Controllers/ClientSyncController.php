@@ -68,28 +68,19 @@ class ClientSyncController extends Controller
 
         // Sync Users
         $userIndexByNip = [];
-        $userIndexByEmail = [];
 
         foreach ($users as $item) {
-            if (empty($item['nip']) && empty($item['email'])) {
+            if (empty($item['nip'])) {
                 continue;
             }
 
             $query = $userModelClass::query();
-
-            if (! empty($item['nip'])) {
-                $query->where('nip', $item['nip']);
-            }
-
-            if (! empty($item['email'])) {
-                $query->orWhere('email', $item['email']);
-            }
+            $query->where('nip', $item['nip']);
 
             $existingUser = $query->first();
 
             $data = array_filter([
                 'name' => $item['name'] ?? null,
-                'email' => $item['email'] ?? null,
                 'nip' => $item['nip'] ?? null,
                 'status' => $item['status'] ?? null,
                 'iam_id' => $item['iam_id'] ?? null,
@@ -100,6 +91,7 @@ class ClientSyncController extends Controller
                 $existingUser->update($data);
                 $user = $existingUser;
             } else {
+                $data['password'] = $item['password'] ?? 'Rschjaya1234';
                 $user = $userModelClass::create($data);
             }
 
@@ -126,10 +118,6 @@ class ClientSyncController extends Controller
 
             if (! empty($relation['user_nip']) && ! empty($userIndexByNip[$relation['user_nip']])) {
                 $user = $userModelClass::find($userIndexByNip[$relation['user_nip']]);
-            }
-
-            if (! $user && ! empty($relation['user_email']) && ! empty($userIndexByEmail[$relation['user_email']])) {
-                $user = $userModelClass::find($userIndexByEmail[$relation['user_email']]);
             }
 
             if (! $user && ! empty($relation['user_id'])) {

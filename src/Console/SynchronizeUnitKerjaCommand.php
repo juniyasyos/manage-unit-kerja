@@ -28,7 +28,7 @@ class SynchronizeUnitKerjaCommand extends Command
 
         $data = $response->getData();
 
-        $this->info('Sinkronisasi berhasil. Unit: ' . ($data->synced_units ?? 0) . ', Pengguna: ' . ($data->synced_users ?? 0) . ', Relasi: ' . ($data->synced_relations ?? 0));
+        $this->info('Sinkronisasi berhasil. Unit: ' . ($data->synced ?? 0) . ', Pengguna: ' . ($data->users ?? 0) . ', Relasi: ' . ($data->relations ?? 0));
 
         return self::SUCCESS;
     }

@@ -20,31 +20,29 @@ class ListUnitKerja extends ListRecords
                 ->icon('heroicon-m-plus');
         }
 
-        if (UnitKejraResource::isSyncActive()) {
-            $actions[] = Actions\Action::make('provisionFromCenter')
-                ->label('Provision from App Center')
-                ->icon('heroicon-m-arrow-down-tray')
-                ->color('secondary')
-                ->action('provisionFromCenter')
-                ->requiresConfirmation()
-                ->modalHeading('Provision from App Center')
-                ->modalSubheading('Sinkronisasi data unit kerja dari pusat (app center)')
-                ->modalButton('Lakukan Provisioning');
-        }
+        // if (UnitKerjaResource::isSyncActive()) {
+        //     $actions[] = Actions\Action::make('provisionFromCenter')
+        //         ->label('Provision from App Center')
+        //         ->icon('heroicon-m-arrow-down-tray')
+        //         ->color('success')
+        //         ->action('provisionFromCenter')
+        //         ->requiresConfirmation()
+        //         ->modalHeading('Provision from App Center');
+        // }
 
         return $actions;
     }
 
-    public function provisionFromCenter(): void
-    {
-        if (!UnitKerjaResource::isSyncActive()) {
-            $this->notify('danger', 'Sync belum diaktifkan.');
+    // public function provisionFromCenter(): void
+    // {
+    //     if (!UnitKerjaResource::isSyncActive()) {
+    //         $this->notify('danger', 'Sync belum diaktifkan.');
 
-            return;
-        }
+    //         return;
+    //     }
 
-        // TODO: implementasi provisioning asli dari app center.
-        // Saat ini placeholder (developer dapat override dengan logika nyata di app utama).
-        $this->notify('success', 'Provisioning dari app center dijalankan (placeholder).');
-    }
+    //     // TODO: implementasi provisioning asli dari app center.
+    //     // Saat ini placeholder (developer dapat override dengan logika nyata di app utama).
+    //     $this->notify('success', 'Provisioning dari app center dijalankan (placeholder).');
+    // }
 }
