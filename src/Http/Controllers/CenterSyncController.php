@@ -5,6 +5,7 @@ namespace Juniyasyos\ManageUnitKerja\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Juniyasyos\ManageUnitKerja\Models\UnitKerja;
 
 class CenterSyncController extends Controller
@@ -15,11 +16,44 @@ class CenterSyncController extends Controller
             return response()->json(['message' => 'App center tidak diaktifkan pada konfigurasi ini.'], 403);
         }
 
-        $units = UnitKerja::query()->whereNull('deleted_at')->get(['id', 'unit_name', 'description', 'slug', 'created_at', 'updated_at']);
+        $unitModel = Config::get('manage-unit-kerja.model.unit_kerja', UnitKerja::class);
+        $userModel = Config::get('manage-unit-kerja.model.user', \App\Models\User::class);
+
+        $unitInstance = new $unitModel();
+        $userInstance = new $userModel();
+
+        $units = $unitModel::query()
+            ->whereNull('deleted_at')
+            ->get(['id', 'unit_name', 'description', 'slug', 'created_at', 'updated_at']);
+
+        $users = $userModel::query()
+            ->when(method_exists($userModel, 'trashed') || method_exists($userInstance, 'getDeletedAtColumn'), fn($query) => $query->whereNull('deleted_at'))
+            ->get(['id', 'nip', 'name', 'email', 'status', 'iam_id', 'active', 'created_at', 'updated_at']);
+
+        $userTable = $userInstance->getTable();
+        $unitTable = $unitInstance->getTable();
+
+        $relations = DB::table('user_unit_kerja')
+            ->join($userTable, 'user_unit_kerja.user_id', '=', "{$userTable}.id")
+            ->join($unitTable, 'user_unit_kerja.unit_kerja_id', '=', "{$unitTable}.id")
+            ->select(
+                'user_unit_kerja.user_id',
+                'user_unit_kerja.unit_kerja_id',
+                'user_unit_kerja.created_at as attached_at',
+                'user_unit_kerja.updated_at as attached_updated_at',
+                "{$userTable}.nip as user_nip",
+                "{$userTable}.email as user_email",
+                "{$unitTable}.slug as unit_slug"
+            )
+            ->get();
 
         return response()->json([
             'status' => 'success',
-            'data' => $units,
+            'data' => [
+                'units' => $units,
+                'users' => $users,
+                'user_unit_kerja' => $relations,
+            ],
         ]);
     }
 }

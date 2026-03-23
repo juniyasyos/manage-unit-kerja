@@ -40,16 +40,115 @@ class ClientSyncController extends Controller
             return response()->json(['message' => 'Format data dari App Center tidak valid.'], 500);
         }
 
-        foreach ($payload['data'] as $item) {
-            UnitKerja::updateOrCreate(
-                ['slug' => $item['slug'] ?? null],
+        $unitModelClass = Config::get('manage-unit-kerja.model.unit_kerja', UnitKerja::class);
+        $userModelClass = Config::get('manage-unit-kerja.model.user', \App\Models\User::class);
+
+        $units = $payload['data']['units'] ?? $payload['data'];
+        $users = $payload['data']['users'] ?? [];
+        $userUnitRelations = $payload['data']['user_unit_kerja'] ?? $payload['data']['userUnitKerja'] ?? [];
+
+        $syncedCount = 0;
+
+        // Sync Units
+        foreach ($units as $item) {
+            if (! isset($item['slug']) || empty($item['slug'])) {
+                continue;
+            }
+
+            $unit = $unitModelClass::updateOrCreate(
+                ['slug' => $item['slug']],
                 [
                     'unit_name' => $item['unit_name'] ?? null,
                     'description' => $item['description'] ?? null,
                 ]
             );
+
+            $syncedCount++;
         }
 
-        return response()->json(['message' => 'Sinkronisasi berhasil.', 'synced' => count($payload['data'])]);
+        // Sync Users
+        $userIndexByNip = [];
+        $userIndexByEmail = [];
+
+        foreach ($users as $item) {
+            if (empty($item['nip']) && empty($item['email'])) {
+                continue;
+            }
+
+            $query = $userModelClass::query();
+
+            if (! empty($item['nip'])) {
+                $query->where('nip', $item['nip']);
+            }
+
+            if (! empty($item['email'])) {
+                $query->orWhere('email', $item['email']);
+            }
+
+            $existingUser = $query->first();
+
+            $data = array_filter([
+                'name' => $item['name'] ?? null,
+                'email' => $item['email'] ?? null,
+                'nip' => $item['nip'] ?? null,
+                'status' => $item['status'] ?? null,
+                'iam_id' => $item['iam_id'] ?? null,
+                'active' => $item['active'] ?? null,
+            ], fn($value) => ! is_null($value));
+
+            if ($existingUser) {
+                $existingUser->update($data);
+                $user = $existingUser;
+            } else {
+                $user = $userModelClass::create($data);
+            }
+
+            if (! empty($item['nip'])) {
+                $userIndexByNip[$item['nip']] = $user->id;
+            }
+            if (! empty($item['email'])) {
+                $userIndexByEmail[$item['email']] = $user->id;
+            }
+        }
+
+        // Sync relation
+        foreach ($userUnitRelations as $relation) {
+            $unit = null;
+            $user = null;
+
+            if (! empty($relation['unit_slug'])) {
+                $unit = $unitModelClass::where('slug', $relation['unit_slug'])->first();
+            }
+
+            if (! $unit && ! empty($relation['unit_kerja_id'])) {
+                $unit = $unitModelClass::find($relation['unit_kerja_id']);
+            }
+
+            if (! empty($relation['user_nip']) && ! empty($userIndexByNip[$relation['user_nip']])) {
+                $user = $userModelClass::find($userIndexByNip[$relation['user_nip']]);
+            }
+
+            if (! $user && ! empty($relation['user_email']) && ! empty($userIndexByEmail[$relation['user_email']])) {
+                $user = $userModelClass::find($userIndexByEmail[$relation['user_email']]);
+            }
+
+            if (! $user && ! empty($relation['user_id'])) {
+                $user = $userModelClass::find($relation['user_id']);
+            }
+
+            if ($unit && $user) {
+                if (method_exists($unit, 'users')) {
+                    $unit->users()->syncWithoutDetaching([$user->id]);
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Sinkronisasi berhasil.',
+            'synced' => $syncedCount,
+            'units' => count($units),
+            'users' => count($users),
+            'relations' => count($userUnitRelations),
+        ]);
     }
 }
