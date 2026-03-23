@@ -29,14 +29,7 @@ class UnitKerjaResourceTable
                 ->wrap()
                 ->grow()
                 ->weight(FontWeight::Bold)
-                ->searchable(),
-
-            TextColumn::make('imut_data_count')
-                ->label(__('filament-forms::imut-category.fields.data_count'))
-                ->counts('imutData')
-                ->badge()
-                ->alignCenter()
-                ->sortable(),
+                ->searchable()
         ];
     }
 
