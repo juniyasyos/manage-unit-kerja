@@ -3,6 +3,10 @@
 namespace Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\RelationManagers;
 
 use App\Models\User;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Select;
@@ -52,9 +56,9 @@ class UsersRelationManager extends RelationManager
                 ])
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->color('primary')
-                    ->form(fn() => [
+                    ->schema(fn() => [
                         Select::make('recordId')
                             ->options(function () {
                                 $relatedIds = $this->getRelationship()->pluck('id')->toArray();
@@ -76,13 +80,14 @@ class UsersRelationManager extends RelationManager
                     ->recordSelectSearchColumns(['name']),
             ])
             ->actions([
-                Tables\Actions\DetachAction::make()
+                DetachAction::make()
                     ->visible(fn() => Gate::any(['attach_user_to_unit_kerja_unit::kerja']))
                     ->requiresConfirmation(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+                BulkActionGroup::make([
+
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

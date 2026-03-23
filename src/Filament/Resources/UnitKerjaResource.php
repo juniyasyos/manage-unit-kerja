@@ -2,6 +2,7 @@
 
 namespace Juniyasyos\ManageUnitKerja\Filament\Resources;
 
+use BackedEnum;
 use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\Pages;
 use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\RelationManagers\UsersRelationManager;
 use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\Schema\UnitKerjaResourceSchema;
@@ -10,6 +11,7 @@ use Juniyasyos\ManageUnitKerja\Models\UnitKerja;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,7 +26,7 @@ class UnitKerjaResource extends Resource implements HasShieldPermissions
         return config('manage-unit-kerja.model.unit_kerja', parent::getModel());
     }
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getPermissionPrefixes(): array
     {
@@ -98,7 +100,7 @@ class UnitKerjaResource extends Resource implements HasShieldPermissions
         return (bool) config('manage-unit-kerja.sync.active', false);
     }
 
-    public static function form(Form $form): Form
+    public static function schema(Schema $form): Schema
     {
         return $form->schema(UnitKerjaResourceSchema::make());
     }
@@ -112,7 +114,7 @@ class UnitKerjaResource extends Resource implements HasShieldPermissions
             ->actions(UnitKerjaResourceTable::actions())
             ->bulkActions(UnitKerjaResourceTable::bulkActions());
     }
-    
+
     public static function getPages(): array
     {
         return [

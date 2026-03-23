@@ -20,16 +20,14 @@ class ListUnitKerja extends ListRecords
                 ->icon('heroicon-m-plus');
         }
 
-        if (UnitKejraResource::isSyncActive()) {
+        if (UnitKerjaResource::isSyncActive()) {
             $actions[] = Actions\Action::make('provisionFromCenter')
                 ->label('Provision from App Center')
                 ->icon('heroicon-m-arrow-down-tray')
                 ->color('secondary')
                 ->action('provisionFromCenter')
                 ->requiresConfirmation()
-                ->modalHeading('Provision from App Center')
-                ->modalSubheading('Sinkronisasi data unit kerja dari pusat (app center)')
-                ->modalButton('Lakukan Provisioning');
+                ->modalHeading('Provision from App Center');
         }
 
         return $actions;

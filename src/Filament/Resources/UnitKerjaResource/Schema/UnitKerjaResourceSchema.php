@@ -2,16 +2,16 @@
 
 namespace Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\Schema;
 
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section as ComponentsSection;
 
 class UnitKerjaResourceSchema
 {
     public static function make(): array
     {
         return [
-            Section::make(__('filament-forms::unit-kerja.form.unit.title'))
+            ComponentsSection::make(__('filament-forms::unit-kerja.form.unit.title'))
                 ->description(__('filament-forms::unit-kerja.form.unit.description'))
                 ->schema([
                     TextInput::make('unit_name')

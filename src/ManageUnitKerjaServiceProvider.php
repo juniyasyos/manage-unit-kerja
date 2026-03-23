@@ -39,13 +39,19 @@ class ManageUnitKerjaServiceProvider extends ServiceProvider
             __DIR__ . '/../config/manage-unit-kerja.php' => config_path('manage-unit-kerja.php'),
         ], 'manage-unit-kerja-config');
 
-        $this->publishes([
-            __DIR__ . '/../database/migrations' => database_path('migrations'),
-        ], 'manage-unit-kerja-migrations');
+        $migrationsPath = __DIR__ . '/../database/migrations';
+        if (is_dir($migrationsPath) && count(glob($migrationsPath . '/*.php')) > 0) {
+            $this->publishes([
+                $migrationsPath => database_path('migrations'),
+            ], 'manage-unit-kerja-migrations');
+        }
 
-        $this->publishes([
-            __DIR__ . '/../database/seeders' => database_path('seeders'),
-        ], 'manage-unit-kerja-seeders');
+        $seedersPath = __DIR__ . '/../database/seeders';
+        if (is_dir($seedersPath) && count(glob($seedersPath . '/*.php')) > 0) {
+            $this->publishes([
+                $seedersPath => database_path('seeders'),
+            ], 'manage-unit-kerja-seeders');
+        }
 
         // Resource publishing tidak diperlukan karena resource dapat dikelola melalui config.
         // Jika pengguna ingin meng-override, mereka dapat menyalin manual dari package atau extend.
@@ -57,17 +63,14 @@ class ManageUnitKerjaServiceProvider extends ServiceProvider
 
         if (is_dir(__DIR__ . '/../resources/lang')) {
             $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'manage-unit-kerja');
+
+            // Expose plugin translations to filament-forms namespace because
+            // UnitKerjaResource uses `__('filament-forms::unit-kerja.*')`
+            $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'filament-forms');
         }
 
         if (file_exists(__DIR__ . '/../routes/web.php')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        }
-
-        // autoload Filament navigation group
-        if (class_exists(\Filament\PluginServiceProvider::class)) {
-            \Filament\PluginServiceProvider::registerNavigationGroups([
-                'unit-kerja',
-            ]);
         }
     }
 

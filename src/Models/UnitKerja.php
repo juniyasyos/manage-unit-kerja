@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Traits\LogsActivity;
 
 class UnitKerja extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'unit_kerja';
 
@@ -70,27 +69,9 @@ class UnitKerja extends Model
         'deleted_at' => 'datetime',
     ];
 
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()->logAll();
-    }
-
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(\App\Models\User::class, 'user_unit_kerja', 'unit_kerja_id', 'user_id')->withTimestamps();
-    }
-
-    public function imutData(): BelongsToMany
-    {
-        return $this->belongsToMany(\App\Models\ImutData::class, 'imut_data_unit_kerja')
-            ->using(\App\Models\ImutDataUnitKerja::class)
-            ->withPivot(['assigned_by', 'assigned_at'])
-            ->withTimestamps();
-    }
-
-    public function laporanUnitKerjas(): HasMany
-    {
-        return $this->hasMany(\App\Models\LaporanUnitKerja::class, 'unit_kerja_id');
     }
 
     public function getUniqueValidationRules(?int $ignoreId = null): array

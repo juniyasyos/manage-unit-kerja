@@ -6,6 +6,7 @@ use Filament\Resources\Pages\EditRecord;
 use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource;
 use Juniyasyos\ManageUnitKerja\Filament\Resources\UnitKerjaResource\RelationManagers\UsersRelationManager;
 use Guava\FilamentModalRelationManagers\Actions\Action\RelationManagerAction;
+use Guava\FilamentModalRelationManagers\Actions\RelationManagerAction as ActionsRelationManagerAction;
 
 class EditUnitKerja extends EditRecord
 {
@@ -20,7 +21,7 @@ class EditUnitKerja extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            RelationManagerAction::make('users')
+            ActionsRelationManagerAction::make('users')
                 ->slideOver()
                 ->icon('heroicon-o-user')
                 ->record($this->getRecord())
