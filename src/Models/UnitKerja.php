@@ -45,7 +45,9 @@ class UnitKerja extends Model
                 throw new \Exception('CRUD tidak diizinkan kecuali pada app center atau environment local.');
             }
 
-            $model->slug = \Illuminate\Support\Str::slug($model->unit_name);
+            if (empty($model->slug)) {
+                $model->slug = \Illuminate\Support\Str::slug($model->unit_name);
+            }
         });
 
         static::deleting(function ($model) {
