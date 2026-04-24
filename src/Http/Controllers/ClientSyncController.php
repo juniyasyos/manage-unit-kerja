@@ -48,6 +48,7 @@ class ClientSyncController extends Controller
         $userUnitRelations = $payload['data']['user_unit_kerja'] ?? $payload['data']['userUnitKerja'] ?? [];
 
         $syncedCount = 0;
+        $unitRecordsBySlug = [];
 
         // Sync Units
         foreach ($units as $item) {
@@ -63,6 +64,7 @@ class ClientSyncController extends Controller
                 ]
             );
 
+            $unitRecordsBySlug[$unit->slug] = $unit;
             $syncedCount++;
         }
 
@@ -89,10 +91,10 @@ class ClientSyncController extends Controller
 
             $data = array_filter([
                 'name' => $item['name'] ?? null,
-                'email' => $item['email'] ?? null,
                 'nip' => $item['nip'] ?? null,
                 'status' => $item['status'] ?? null,
                 'iam_id' => $item['iam_id'] ?? null,
+                'email' => $item['email'] ?? null,
                 'active' => $item['active'] ?? null,
             ], fn($value) => ! is_null($value));
 
@@ -100,6 +102,7 @@ class ClientSyncController extends Controller
                 $existingUser->update($data);
                 $user = $existingUser;
             } else {
+                $data['password'] = $item['password'] ?? 'Rschjaya1234';
                 $user = $userModelClass::create($data);
             }
 
@@ -111,7 +114,8 @@ class ClientSyncController extends Controller
             }
         }
 
-        // Sync relation
+        $relationIdsByUnitSlug = [];
+
         foreach ($userUnitRelations as $relation) {
             $unit = null;
             $user = null;
@@ -124,7 +128,7 @@ class ClientSyncController extends Controller
                 $unit = $unitModelClass::find($relation['unit_kerja_id']);
             }
 
-            if (! empty($relation['user_nip']) && ! empty($userIndexByNip[$relation['user_nip']])) {
+            if (! $user && ! empty($relation['user_nip']) && ! empty($userIndexByNip[$relation['user_nip']])) {
                 $user = $userModelClass::find($userIndexByNip[$relation['user_nip']]);
             }
 
@@ -137,10 +141,16 @@ class ClientSyncController extends Controller
             }
 
             if ($unit && $user) {
-                if (method_exists($unit, 'users')) {
-                    $unit->users()->syncWithoutDetaching([$user->id]);
-                }
+                $relationIdsByUnitSlug[$unit->slug][] = $user->id;
             }
+        }
+
+        foreach ($unitRecordsBySlug as $slug => $unit) {
+            if (! method_exists($unit, 'users')) {
+                continue;
+            }
+
+            $unit->users()->sync(array_values(array_unique($relationIdsByUnitSlug[$slug] ?? [])));
         }
 
         return response()->json([
