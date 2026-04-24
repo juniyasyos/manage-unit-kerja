@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Juniyasyos\ManageUnitKerja\Models\UnitKerja;
+use Juniyasyos\ManageUnitKerja\Services\UnitKerjaSyncService;
 
 class ClientSyncController extends Controller
 {
@@ -40,125 +41,9 @@ class ClientSyncController extends Controller
             return response()->json(['message' => 'Format data dari App Center tidak valid.'], 500);
         }
 
-        $unitModelClass = Config::get('manage-unit-kerja.model.unit_kerja', UnitKerja::class);
-        $userModelClass = Config::get('manage-unit-kerja.model.user', \App\Models\User::class);
+        $service = new UnitKerjaSyncService();
+        $result = $service->sync($payload);
 
-        $units = $payload['data']['units'] ?? $payload['data'];
-        $users = $payload['data']['users'] ?? [];
-        $userUnitRelations = $payload['data']['user_unit_kerja'] ?? $payload['data']['userUnitKerja'] ?? [];
-
-        $syncedCount = 0;
-        $unitRecordsBySlug = [];
-
-        // Sync Units
-        foreach ($units as $item) {
-            if (! isset($item['slug']) || empty($item['slug'])) {
-                continue;
-            }
-
-            $unit = $unitModelClass::updateOrCreate(
-                ['slug' => $item['slug']],
-                [
-                    'unit_name' => $item['unit_name'] ?? null,
-                    'description' => $item['description'] ?? null,
-                ]
-            );
-
-            $unitRecordsBySlug[$unit->slug] = $unit;
-            $syncedCount++;
-        }
-
-        // Sync Users
-        $userIndexByNip = [];
-        $userIndexByEmail = [];
-
-        foreach ($users as $item) {
-            if (empty($item['nip']) && empty($item['email'])) {
-                continue;
-            }
-
-            $query = $userModelClass::query();
-
-            if (! empty($item['nip'])) {
-                $query->where('nip', $item['nip']);
-            }
-
-            if (! empty($item['email'])) {
-                $query->orWhere('email', $item['email']);
-            }
-
-            $existingUser = $query->first();
-
-            $data = array_filter([
-                'name' => $item['name'] ?? null,
-                'nip' => $item['nip'] ?? null,
-                'status' => $item['status'] ?? null,
-                'iam_id' => $item['iam_id'] ?? null,
-                'email' => $item['email'] ?? null,
-                'active' => $item['active'] ?? null,
-            ], fn($value) => ! is_null($value));
-
-            if ($existingUser) {
-                $existingUser->update($data);
-                $user = $existingUser;
-            } else {
-                $data['password'] = $item['password'] ?? 'Rschjaya1234';
-                $user = $userModelClass::create($data);
-            }
-
-            if (! empty($item['nip'])) {
-                $userIndexByNip[$item['nip']] = $user->id;
-            }
-            if (! empty($item['email'])) {
-                $userIndexByEmail[$item['email']] = $user->id;
-            }
-        }
-
-        $relationIdsByUnitSlug = [];
-
-        foreach ($userUnitRelations as $relation) {
-            $unit = null;
-            $user = null;
-
-            if (! empty($relation['unit_slug'])) {
-                $unit = $unitModelClass::where('slug', $relation['unit_slug'])->first();
-            }
-
-            if (! $unit && ! empty($relation['unit_kerja_id'])) {
-                $unit = $unitModelClass::find($relation['unit_kerja_id']);
-            }
-
-            if (! $user && ! empty($relation['user_nip']) && ! empty($userIndexByNip[$relation['user_nip']])) {
-                $user = $userModelClass::find($userIndexByNip[$relation['user_nip']]);
-            }
-
-            if (! $user && ! empty($relation['user_email']) && ! empty($userIndexByEmail[$relation['user_email']])) {
-                $user = $userModelClass::find($userIndexByEmail[$relation['user_email']]);
-            }
-
-            if (! $user && ! empty($relation['user_id'])) {
-                $user = $userModelClass::find($relation['user_id']);
-            }
-
-            if ($unit && $user) {
-                $relationIdsByUnitSlug[$unit->slug][] = $user->id;
-            }
-        }
-
-        foreach ($unitRecordsBySlug as $slug => $unit) {
-            if (! method_exists($unit, 'users')) {
-                continue;
-            }
-
-            $unit->users()->sync(array_values(array_unique($relationIdsByUnitSlug[$slug] ?? [])));
-        }
-
-        return response()->json([
-            'message' => 'Sinkronisasi berhasil.',
-            'synced' => $syncedCount,
-            'units' => count($units),
-            'users' => count($users),
-            'relations' => count($userUnitRelations),
-        ]);
+        return response()->json($result);
     }
 }
