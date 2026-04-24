@@ -28,7 +28,7 @@ class CenterSyncController extends Controller
 
         $users = $userModel::query()
             ->when(method_exists($userModel, 'trashed') || method_exists($userInstance, 'getDeletedAtColumn'), fn($query) => $query->whereNull('deleted_at'))
-            ->get(['id', 'nip', 'name', 'email', 'status', 'iam_id', 'active', 'created_at', 'updated_at']);
+            ->get(['id', 'nip', 'name', 'email', 'status', 'iam_id', 'created_at', 'updated_at']);
 
         $userTable = $userInstance->getTable();
         $unitTable = $unitInstance->getTable();

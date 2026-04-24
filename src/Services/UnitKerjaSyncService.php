@@ -71,7 +71,6 @@ class UnitKerjaSyncService
                 'status' => $item['status'] ?? null,
                 'iam_id' => $item['iam_id'] ?? null,
                 'email' => $item['email'] ?? null,
-                'active' => $item['active'] ?? null,
             ], fn($value) => $value !== null);
 
             if ($existingUser) {
