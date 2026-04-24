@@ -26,13 +26,10 @@ class CenterSyncController extends Controller
             ->whereNull('deleted_at')
             ->get(['id', 'unit_name', 'description', 'slug', 'created_at', 'updated_at']);
 
-        // Build user query with dynamic column selection and iam_id mapping
-        // iam_id is the user id from the center app, status may or may not exist
-        $userQuery = $userModel::query()
-            ->when(method_exists($userModel, 'trashed') || method_exists($userInstance, 'getDeletedAtColumn'), 
-                fn($query) => $query->whereNull('deleted_at'));
-        
-        // Check which columns actually exist on this table
+        $users = $userModel::query()
+            ->when(method_exists($userModel, 'trashed') || method_exists($userInstance, 'getDeletedAtColumn'), fn($query) => $query->whereNull('deleted_at'))
+            ->get(['id', 'nip', 'name', 'email', 'status', 'iam_id', 'created_at', 'updated_at']);
+
         $userTable = $userInstance->getTable();
         $existingColumns = \Illuminate\Support\Facades\Schema::getColumnListing($userTable);
         
