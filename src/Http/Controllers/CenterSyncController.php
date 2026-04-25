@@ -26,31 +26,27 @@ class CenterSyncController extends Controller
             ->whereNull('deleted_at')
             ->get(['id', 'unit_name', 'description', 'slug', 'created_at', 'updated_at']);
 
-        $users = $userModel::query()
-            ->when(method_exists($userModel, 'trashed') || method_exists($userInstance, 'getDeletedAtColumn'), fn($query) => $query->whereNull('deleted_at'))
-            ->get(['id', 'nip', 'name', 'email', 'status', 'iam_id', 'created_at', 'updated_at']);
+        $userQuery = $userModel::query()
+            ->when(method_exists($userModel, 'trashed') || method_exists($userInstance, 'getDeletedAtColumn'), fn($query) => $query->whereNull('deleted_at'));
 
         $userTable = $userInstance->getTable();
         $existingColumns = \Illuminate\Support\Facades\Schema::getColumnListing($userTable);
-        
-        // Build select array dynamically
+
+        // Build select array dynamically and avoid selecting a missing iam_id column.
         $selectColumns = [];
         foreach (['id', 'nip', 'name', 'email', 'status', 'active', 'created_at', 'updated_at'] as $col) {
-            if (in_array($col, $existingColumns)) {
+            if (in_array($col, $existingColumns, true)) {
                 $selectColumns[] = $col;
             }
         }
-        
-        // Ensure id is always selected (for iam_id mapping)
-        if (!in_array('id', $selectColumns)) {
+
+        // Ensure id is always selected for iam_id mapping.
+        if (! in_array('id', $selectColumns, true)) {
             $selectColumns[] = 'id';
         }
-        
+
         $users = $userQuery->get($selectColumns)->map(function ($user) {
-            // Map id to iam_id for client app compatibility
-            if (isset($user->id)) {
-                $user->iam_id = $user->id;
-            }
+            $user->iam_id = $user->id;
             return $user;
         });
 
